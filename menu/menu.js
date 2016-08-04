@@ -1,6 +1,9 @@
 const request = require('request');
-const jssdk = require('./libs/jssdk.js');
+const JSSDK = require('../libs/jssdk.js');
 const schedule = require('node-schedule');
+
+const jssdk = new JSSDK('wx0d3fe90f46946b2b','8d8cd2ec36fa750cfdf7566e850ba03c');
+
 const menuItems = {
 	"button":[
 		{

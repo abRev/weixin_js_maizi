@@ -115,4 +115,4 @@ JSSDK.prototype={
 };
 
 var sdk = new JSSDK('wx0d3fe90f46946b2b','8d8cd2ec36fa750cfdf7566e850ba03c');
-module.exports = sdk;
+module.exports = JSSDK;
