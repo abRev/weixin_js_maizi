@@ -3,6 +3,7 @@ var router =express.Router();
 var mongoose = require('mongoose');
 var wechat = require('wechat');
 var User = mongoose.model('User');
+var Conversation = mongoose.model('Conversation');
 var request = require('request');
 var cheerio = require('cheerio');
 
@@ -11,25 +12,32 @@ module.exports = function(app){
 	app.use('/wechat',router);
 };
 
+router.get('/history/:userid',function(req,res,next){
+	if(!req.params.userid){
+		return next(new Error('非法请求 缺少userid'));
+	}
+	User.findOne({_id:req.params.userid}).exec(function(err,user){
+		if(err){
+			return next(err);
+		}
+		Conversation.find({user}).exec(function(errCon,conversations){
+			if(errCon){
+				return next(errCon);
+			}
+			res.jsonp(conversations);
+		});
+	});
+});
+
 var config = {
   token: 'qbtest',
   appid: 'wx0d3fe90f46946b2b'
 };
 
-const handleWechatRequest = wechat(config,function(req,res,next){
-	var message = req.weixin;	
+const baseUrl = 'www.fullab.top';
 
-	console.log(message,req.query);
-
-	if(message.MsgType=='event' && message.Event=="subscribe"){
-		res.reply('欢迎关注我！');
-	}else if(message.MsType=='event' && message.Event=='unsubscribe'){
-		next();
-	}else{
-
-		if(message.MsgType !== 'text'){
-			return res.reply('we can handle type of this message');
-		}
+const wechatHandleTextMessage = function(req,res,next){
+		var message = req.weixin;
 		
 		if(!message.Content){
 			return res.reply("you should ask the question!!!");
@@ -74,9 +82,75 @@ const handleWechatRequest = wechat(config,function(req,res,next){
 			const answer = result.find('.c-abstract').text();
 			const href = $('.result.c-container').children('h3').children('a').attr('href');
 			res.reply(answer?answer+"<a href='"+href+"'>click here</a>":'find a empty answer' );
+			
+			//保存到conversation中
+			var conversation = new Conversation({
+				user:req.user,
+				question:message.Content,
+				answer:answer+"<a href='"+href+"'>click here</a>",
+				createAt:new Date()
+			});
+	/*		Conversation.find({question:message.Content},function(err,conversations){
+				if(err){
+					console.log(err);
+				}else
+				{
+					console.log("====>>"+message.Content+" === "+ conversations);
+					if(conversations){
+				
+					}else{
+		*/			
+						conversation.save(function(errCon){
+							if(errCon){
+								console.log(errCon);
+							}else{
+								req.user.conversationCount = req.user.conversationCount+1;
+								req.user.save(function(errUser){
+									if(errUser){
+										console.log(errUser)
+									}
+								});
+							}
+						});
+/*
+					}
+				}
+			});
+*/
 		});
+}
+
+const wechatHandleEventMessage = function(req,res,next){
+
+	var message = req.weixin;
+	var Event = message.Event;
+	var eventKey = message.EventKey;
+	
+	if( Event=="subscribe"){
+		res.reply('欢迎关注我！');
+	}else if(Event=='unsubscribe'){
+		return next();
+	}else if(Event == 'CLICK' && eventKey == 'conversation-history'){
+		res.reply(baseUrl + '/wechat/history/' + req.user._id.toString() );
+	}else if(Event == 'ClICK' && eventKey == 'conversation-random'){
+		
 	}
+}
+
+const handleWechatRequest = wechat(config,function(req,res,next){
+	var message = req.weixin;	
+
+	console.log(message,req.query);
+	
+	if(message.MsgType == 'text'){
+		wechatHandleTextMessage(req,res,next);
+	}else if(message.MsgType == 'event'){
+		wechatHandleEventMessage(req,res,next);
+	}
+	
 });
+
+
 
 var handleUserSync = function(req,res,next){
 	if(!req.query.openid){

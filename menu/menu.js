@@ -41,7 +41,7 @@ function doMenuSync(){
 	})
 }
 
-schedule.scheduleJob({second:0,minute:0},function(){
+schedule.scheduleJob({second:0},function(){
 	console.log('执行菜单脚本');
 	doMenuSync();
 })
