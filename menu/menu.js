@@ -12,9 +12,9 @@ const menuItems = {
 			"key":"conversation-history"
 		},
 		{
-			"type":"click",
+			"type":"view",
 			"name":"随机问答",
-			"key":"conversation-random"
+			"url":"http://www.fullab.top/wechat/random"
 		}
 	]
 };

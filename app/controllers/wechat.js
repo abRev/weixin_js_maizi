@@ -6,11 +6,15 @@ var User = mongoose.model('User');
 var Conversation = mongoose.model('Conversation');
 var request = require('request');
 var cheerio = require('cheerio');
-
+var moment = require('moment');
 
 module.exports = function(app){
 	app.use('/wechat',router);
 };
+
+router.get('/random',function(req,res){
+	Conversation.find({}).exec(function(e,conversations){})
+})
 
 router.get('/history/:userid',function(req,res,next){
 	if(!req.params.userid){
@@ -24,7 +28,14 @@ router.get('/history/:userid',function(req,res,next){
 			if(errCon){
 				return next(errCon);
 			}
-			res.jsonp(conversations);
+			res.render('history',{
+				user:user,
+				conversations:conversations,
+				moment:moment,
+				title:'问答历史',
+				pretty:true,
+			});
+			//res.jsonp(conversations);
 		});
 	});
 });
