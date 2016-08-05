@@ -90,16 +90,16 @@ const wechatHandleTextMessage = function(req,res,next){
 				answer:answer+"<a href='"+href+"'>click here</a>",
 				createAt:new Date()
 			});
-	/*		Conversation.find({question:message.Content},function(err,conversations){
+			
+			Conversation.find({question:message.Content.toString()},function(err,conversations){
 				if(err){
 					console.log(err);
 				}else
 				{
-					console.log("====>>"+message.Content+" === "+ conversations);
-					if(conversations){
-				
+					if(conversations && conversations.length>0){
+							
 					}else{
-		*/			
+						console.log("conversation   save:"+conversation);		
 						conversation.save(function(errCon){
 							if(errCon){
 								console.log(errCon);
@@ -112,11 +112,11 @@ const wechatHandleTextMessage = function(req,res,next){
 								});
 							}
 						});
-/*
+
 					}
 				}
 			});
-*/
+
 		});
 }
 
