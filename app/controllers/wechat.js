@@ -7,16 +7,38 @@ var Conversation = mongoose.model('Conversation');
 var request = require('request');
 var cheerio = require('cheerio');
 var moment = require('moment');
+var lodash = require('lodash');
+var JSSDK = require('../../libs/jssdk');
+
+var jssdk = new JSSDK('wx0d3fe90f46946b2b','8d8cd2ec36fa750cfdf7566e850ba03c');
 
 module.exports = function(app){
 	app.use('/wechat',router);
 };
 
-router.get('/random',function(req,res){
-	Conversation.find({}).exec(function(e,conversations){})
+const getSignPackage = function(req,res,next){
+	var signPackage = jssdk.getSignPackage('http://www.fullab.top'+req.originalUrl);
+	req.signPackage = signPackage;
+	next();
+}
+
+router.get('/random',getSignPackage,function(req,res,next){
+	Conversation.find({}).limit(100).exec(function(e,conversations){
+		const shuffled = lodash.shuffle(conversations).slice(0,20);
+		if(e){
+			return next(new Error('随机问答出错'));
+		}
+		res.render('random',{
+			signPackage:req.signPackage,
+			conversations:shuffled,
+			moment:moment,
+			title:'随机问答',
+			pretty:true
+		});
+	})
 })
 
-router.get('/history/:userid',function(req,res,next){
+router.get('/history/:userid',getSignPackage,function(req,res,next){
 	if(!req.params.userid){
 		return next(new Error('非法请求 缺少userid'));
 	}
@@ -24,11 +46,12 @@ router.get('/history/:userid',function(req,res,next){
 		if(err){
 			return next(err);
 		}
-		Conversation.find({user}).exec(function(errCon,conversations){
-			if(errCon){
-				return next(errCon);
+	Conversation.find({user}).exec(function(errCon,conversations){
+		  if(errCon){
+			  return next(errCon);
 			}
 			res.render('history',{
+				signPackage:req.signPackage,
 				user:user,
 				conversations:conversations,
 				moment:moment,
@@ -36,10 +59,9 @@ router.get('/history/:userid',function(req,res,next){
 				pretty:true,
 			});
 			//res.jsonp(conversations);
-		});
-	});
+	  });
+  });
 });
-
 var config = {
   token: 'qbtest',
   appid: 'wx0d3fe90f46946b2b'

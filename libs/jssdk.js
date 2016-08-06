@@ -8,7 +8,11 @@ function JSSDK(appId,appSecret){
 
 JSSDK.prototype={
 	getSignPackage:function(url){
-		var jsapiTicket =this.getJsApiTicket(function(err,ticket){return ticket});
+		var jsapiTicket;
+		this.getJsApiTicket(function(err,ticket){
+			jsapiTicket = ticket;
+		});
+		console.log('jsapiticket ===> '+jsapiTicket);
 		var timestamp = Math.round(Date.now()/1000);
 		var nonceStr = this.createNonceStr();
 		
@@ -22,8 +26,7 @@ JSSDK.prototype={
 			nonceStr:nonceStr,
 			timestamp:timestamp,
 			url:url,
-			signature:sign,
-			rowString:rowString
+			signature:sign
 		};
 	},
 	getJsApiTicket:function(done){
